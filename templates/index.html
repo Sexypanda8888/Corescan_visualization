@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>查找地址core流动</title>
+    <script src="https://cdn.bootcss.com/jquery/3.0.0/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts@4.3.0/dist/echarts.min.js"></script>
+    <script src="https://cdn.staticfile.org/twitter-bootstrap/5.1.1/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/5.1.1/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container pt-5">
+        <div class="row">
+            <div class="col"></div>
+            <div class="col-lg-6 col-md-8 col-sm-10 text-center">
+                这是一个用来查core链上core流动的简单可视化工具。点、线的大小和数值对应。点的数值为其总交易量（入+出），线的数值为该方向的总交易量。
+                建议用电脑或者平板来查询，目前没有做手机适配。<a href="/token">点击这里查询Token流动情况</a>
+                <div class="input-group mt-1">
+                    <input id="address" type="text" class="form-control" placeholder="输入要查找的地址" aria-label="Recipient's username" aria-describedby="button-addon2">
+                    <button class="btn btn-outline-secondary" type="button" id="button-addon2" onclick="getData()">查询</button>
+                </div>
+            </div>
+            <div class="col"></div>
+        </div>
+        <div class="row">
+                <div id="graph"></div>
+        </div>
+        <div class="row">
+            <div class="col"></div>
+            <div id="table" class="col-lg-6 col-md-8 col-sm-10">
+                
+            </div>
+            <div class="col"></div>
+        </div>
+    </div>
+    
+    <script>
+
+            
+        function checkAddress(address){
+            var patt=new RegExp(/^0x[0-9 a-z A-Z]{40}$/);
+            
+            return patt.test(address)
+        }
+        function getData(){
+var address = $("#address").val()
+            if (checkAddress(address)){
+                var width = $("#graph-container").width()
+                var window_width = $(window).width()
+                var window_height = $(window).height()
+                $("#graph").width(window_width)
+                $("#graph").height(window_height)
+
+                $.ajax({
+                        type: "POST",
+                        url: "http://127.0.0.1:5000/graph",
+                        dataType: 'json',
+                        data:{
+                            address:address
+                        },
+                        success: function (result) {
+                            var chart = echarts.init(
+                    document.getElementById('graph'), 'white', {renderer: 'canvas'});
+                var option = {
+                    "animation": true,
+                    "animationThreshold": 2000,
+                    "animationDuration": 1000,
+                    "animationEasing": "cubicOut",
+                    "animationDelay": 0,
+                    "animationDurationUpdate": 300,
+                    "animationEasingUpdate": "cubicOut",
+                    "animationDelayUpdate": 0,
+                    "aria": {
+                        "enabled": false
+                    },
+                    "color": [
+                        "#5470c6",
+                        "#91cc75",
+                        "#fac858",
+                        "#ee6666",
+                        "#73c0de",
+                        "#3ba272",
+                        "#fc8452",
+                        "#9a60b4",
+                        "#ea7ccc"
+                    ],
+                    "series": [
+                                {
+                                    "type": "graph",
+                                    "layout": "force",
+                                    "zoom": 4,
+                                    "symbolSize": 10,
+                                    "circular": {
+                                        "rotateLabel": false
+                                    },
+                                    "force": {
+                                        "repulsion": 50,
+                                        "gravity": 0.2,
+                                        "edgeLength": 10,
+                                        "friction": 0.6,
+                                        "layoutAnimation": true
+                                    },
+                                    "label": {
+                                        "show": true,
+                                        "margin": 8
+                                    },
+                                    "lineStyle": {
+                                        "show": true,
+                                        "width": 1,
+                                        "opacity": 1,
+                                        "curveness": 0,
+                                        "type": "solid"
+                                    },
+                                    "roam": true,
+                                    "draggable": false,
+                                    "focusNodeAdjacency": true,
+                                    "data":[],
+                                    "edgeLabel": {
+                                        "show": false,
+                                        "margin": 8
+                                    },
+                                    "edgeSymbol": [
+                                        null,
+                                        null
+                                    ],
+                                    "edgeSymbolSize": 10,
+                                    "links": [],
+                                    "tooltip": {
+                                        "show": true,
+                                        "trigger": "item",
+                                        "triggerOn": "mousemove|click",
+                                        "axisPointer": {
+                                            "type": "line"
+                                        },
+                                        "showContent": true,
+                                        "alwaysShowContent": false,
+                                        "showDelay": 0,
+                                        "hideDelay": 100,
+                                        "enterable": false,
+                                        "confine": false,
+                                        "appendToBody": false,
+                                        "transitionDuration": 0.4,
+                                        "formatter": function(params) {                        if (params.dataType=='edge'){                            let data = params.data.symbol[2];                            let address = params.name.split('>');                            let ss = 'from:<br/>' + address[0] + '<br/>' + 'to:<br/>' + address[1] + '<br/>';                            for (let i=0;i<data.length;i++){                                ss = ss + data[i]['time'] + '   <span style=\"font-weight:bold\">'+ data[i]['value'] +' </span>'+ result['token_name'] +'<br/> ';                            }                            return ss;                        }                        else if(params.dataType=='node'){                            return params.marker + params.name + '  <span style=\"font-weight:bold\">' + params.value + '</span> '+ result['token_name'];                        }                    },
+                                        "textStyle": {
+                                            "fontSize": 14
+                                        },
+                                        "borderWidth": 0,
+                                        "padding": 5,
+                                        "order": "seriesAsc"
+                                    }
+                                }
+                            ],
+                            "legend": [
+                                {
+                                    "data": [],
+                                    "selected": {},
+                                    "show": true,
+                                    "padding": 5,
+                                    "itemGap": 10,
+                                    "itemWidth": 25,
+                                    "itemHeight": 14,
+                                    "backgroundColor": "transparent",
+                                    "borderColor": "#ccc",
+                                    "borderWidth": 1,
+                                    "borderRadius": 0,
+                                    "pageButtonItemGap": 5,
+                                    "pageButtonPosition": "end",
+                                    "pageFormatter": "{current}/{total}",
+                                    "pageIconColor": "#2f4554",
+                                    "pageIconInactiveColor": "#aaa",
+                                    "pageIconSize": 15,
+                                    "animationDurationUpdate": 800,
+                                    "selector": false,
+                                    "selectorPosition": "auto",
+                                    "selectorItemGap": 7,
+                                    "selectorButtonGap": 10
+                                }
+                            ],
+                            "tooltip": {
+                                "show": true,
+                                "trigger": "item",
+                                "triggerOn": "mousemove|click",
+                                "axisPointer": {
+                                    "type": "line"
+                                },
+                                "showContent": true,
+                                "alwaysShowContent": false,
+                                "showDelay": 0,
+                                "hideDelay": 100,
+                                "enterable": false,
+                                "confine": false,
+                                "appendToBody": false,
+                                "transitionDuration": 0.4,
+                                "textStyle": {
+                                    "fontSize": 14
+                                },
+                                "borderWidth": 0,
+                                "padding": 5,
+                                "order": "seriesAsc"
+                            },
+                            "title": [
+                                {
+                                    "show": false,
+                                    "text": "\u4e00\u7ea7core\u6d41\u5411\u6d4b\u8bd5",
+                                    "target": "blank",
+                                    "subtarget": "blank",
+                                    "padding": 5,
+                                    "itemGap": 10,
+                                    "textAlign": "auto",
+                                    "textVerticalAlign": "auto",
+                                    "triggerEvent": false
+                                }
+                            ]
+                }
+            
+
+
+                            $("#table").html(result['nodes_list'])
+                            option['series'][0]['data'] = result['nodes_data']
+                            option['series'][0]['links'] = result['links_data']
+                            chart.setOption(option)
+                        },
+                        error: function (result){
+                            alert("服务器后台出错！")
+                        }
+                    });
+            }
+            else{
+                alert("地址输入错误！")
+            }
+
+        }
+
+    </script>
+</body>
+
+</html>
